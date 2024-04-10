@@ -77,12 +77,8 @@ def main(opt):
 
     # 将当前时间格式化为字符串，例如：'04101500'
     time_str = current_time.strftime("%m%d%H%M")   
-    try:
-        torch.save(model.state_dict(), f"weights/PVT/{opt.model}_{time_str}.pth")
-    except:
-        print("save model failed!")
-    else:
-        print(f"save model 'weights/PVT/{opt.model}_{time_str}.pth' successfully!")
+    torch.save(model.state_dict(), f"weights/PVT/{opt.model}_{time_str}.pth")
+    print(f"save model 'weights/PVT/{opt.model}_{time_str}.pth' successfully!")
 
 # python train_single_cuda.py --data_path ../datasets/aoteman  --epochs 1
 if __name__ == '__main__':

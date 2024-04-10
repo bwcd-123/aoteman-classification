@@ -7,4 +7,4 @@
 source /apps/software/anaconda3/etc/profile.d/conda.sh
 module load cuda/11.6
 conda activate torch39
-python train_single_cuda.py  --data_path ../datasets/aoteman  --batch_size 110  --num_workers 10
+python train_single_cuda.py  --data_path ../datasets/aoteman  --batch_size 110  --num_workers 10  --epochs 1
