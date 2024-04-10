@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from thop import profile, clever_format
+import tqdm
 
 from mydataset import ImageDataset
 
@@ -74,7 +75,67 @@ def read_aoteman_data(root:str, train:bool=True, transform=None, **kwargs):
         
 
 def train_one_epoch(model, optimizer, data_loader, loss_fn, device):
-    pass
+    """
+    Train the model. Return the average loss and accuracy.
+
+    Parameters:
+        model(torch.nn.Module): model to train.
+        data_loader(torch.utils.data.Dataloader): data loader.
+        loss_fn: loss function.
+        device: device to train.
+    """
+    model.train()
+    optimizer.zero_grad()
+
+    batch_len = len(data_loader)
+    data_len = 0.
+    total_loss = 0.
+    rights = 0.
+    for images, labels in data_loader:
+        images = images.to(device)
+        labels = labels.to(device)
+        data_len += len(labels)
+
+        predictions = model(images)
+        loss = loss_fn(predictions, labels)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+        total_loss += loss.detach().item()
+        rights += (predictions.argmax(dim=1) == labels).sum().item()
+    
+    return total_loss / batch_len, rights / data_len
+
+
+def eval(model, data_loader, loss_fn, device):
+    """
+    Eval the model. Return the average loss and accuracy.
+
+    Parameters:
+        model(torch.nn.Module): model to eval.
+        data_loader(torch.utils.data.Dataloader): data loader.
+        loss_fn: loss function.
+        device: device to eval.
+    """
+    model.eval()
+    batch_len = len(data_loader)
+    total_loss = 0.
+    rights = 0.
+    data_len = 0.
+    with torch.no_grad():
+        for images, labels in data_loader:
+            images = images.to(device)
+            labels = labels.to(device)
+            data_len += len(labels)
+            
+            predictions = model(images)
+            loss = loss_fn(predictions, labels)
+            
+            total_loss += loss.detach().item()
+            rights += (predictions.argmax(dim=1) == labels).sum().item()
+            
+    return total_loss / batch_len, rights / data_len
 
 
 def show_L1Norm_vgg(model, save_path=None):
