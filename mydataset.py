@@ -21,10 +21,10 @@ class ImageDataset(Dataset):
         if img.mode == "RGBA":
             img = img.convert("RGB")
         if img.mode != "RGB":
-            raise ValueError("image: {} isn't RGB mode.".format(self.image_path[index]))
+            raise ValueError("image: {} isn't RGB mode.".format(
+                self.image_path[index]))
         
         label = self.image_labels[index]
-
         if self.transform:
             img = self.transform(img)
 
@@ -34,7 +34,6 @@ class ImageDataset(Dataset):
     @staticmethod
     def collate_fn(patch):
         images, labels = tuple(zip(*patch))
-
         images = torch.stack(images, dim=0)
         labels = torch.as_tensor(labels)
         return images, labels

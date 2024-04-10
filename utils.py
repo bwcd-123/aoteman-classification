@@ -7,9 +7,11 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from thop import profile, clever_format
-import tqdm
+import platform
 
 from mydataset import ImageDataset
+from models.pvtv2 import pvt_v2_b0, pvt_v2_b1, pvt_v2_b2, pvt_v2_b3, pvt_v2_b4, pvt_v2_b5, pvt_v2_b2_li
+
 
 dict = {
     'dijia':0,
@@ -46,9 +48,9 @@ def remove_oldest_item(path:str, number:int=10):
             print(f'fail to delete "{oldest_item_path}": {e}')
 
 
-def read_aoteman_data(root:str, train:bool=True, transform=None, **kwargs):
+def read_aoteman_data(root:str, train:bool=True):
     """
-    Read aoteman dataset. If train, return train dataset. Else, return eval dataset.
+    Read aoteman dataset. If True, return train's image paths and labels. Else, return eval's.
     """
     test_root = os.path.join(root, "predict_demo.jpg")
     if not os.path.exists(test_root):
@@ -74,7 +76,7 @@ def read_aoteman_data(root:str, train:bool=True, transform=None, **kwargs):
     return images, labels
         
 
-def train_one_epoch(model, optimizer, data_loader, loss_fn, device):
+def train_one_epoch_single_cuda(model, optimizer, data_loader, loss_fn, device):
     """
     Train the model. Return the average loss and accuracy.
 
@@ -108,7 +110,7 @@ def train_one_epoch(model, optimizer, data_loader, loss_fn, device):
     return total_loss / batch_len, rights / data_len
 
 
-def eval(model, data_loader, loss_fn, device):
+def eval_single_cuda(model, data_loader, loss_fn, device):
     """
     Eval the model. Return the average loss and accuracy.
 
@@ -199,6 +201,58 @@ def get_mean_and_std(dataloader):
     data_std = torch.std(data, dim=[0, 2, 3])
 
     return data_mean, data_std
+
+
+def get_model(model_name:str, pretrained:bool=True, **kwargs):
+    """
+    get model by model_name.
+    """
+    names = ['pvt_v2_b0', 'pvt_v2_b1', 'pvt_v2_b2', 'pvt_v2_b3', 'pvt_v2_b4', 'pvt_v2_b5', 'pvt_v2_b2_li']
+    if model_name == names[0]:
+        return pvt_v2_b0(pretrained=pretrained, **kwargs)
+    elif model_name == names[1]:
+        return pvt_v2_b1(pretrained=pretrained, **kwargs)
+    elif model_name == names[2]:
+        return pvt_v2_b2(pretrained=pretrained, **kwargs)
+    elif model_name == names[3]:
+        return pvt_v2_b3(pretrained=pretrained, **kwargs)
+    elif model_name == names[4]:
+        return pvt_v2_b4(pretrained=pretrained, **kwargs)
+    elif model_name == names[5]:
+        return pvt_v2_b5(pretrained=pretrained, **kwargs)
+    elif model_name == names[6]:
+        return pvt_v2_b2_li(pretrained=pretrained, **kwargs)
+    else:
+        raise Exception(f"error model name: '{model_name}'")
+
+
+def formate_abs_path(path: str) -> str:
+    """这主要针对windows环境，输入的绝对路径可能不包含盘符，这里进行补充
+    主要是用于打印效果
+    如果不是windows环境，直接返回path，相当于没有调用这个函数
+
+    Parameters
+    ----------
+    path : str
+        待转换的路径
+
+    Returns
+    -------
+    str
+        增加了盘符的路径
+    
+    摘抄自swanlab
+    """
+    if platform.system() != "Windows":
+        return path
+    if not os.path.isabs(path):
+        return path
+    need_add = len(path) < 3 or path[1] != ":"
+    # 处理反斜杠, 保证路径的正确性
+    path = path.replace("/", "\\")
+    if need_add:
+        return os.path.join(os.getcwd()[:2], path)
+    return path
 
 
 if __name__ == "__main__":
