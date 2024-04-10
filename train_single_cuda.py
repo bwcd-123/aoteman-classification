@@ -63,7 +63,7 @@ def main(opt):
     for epoch in range(opt.epochs):
         start_time = time.perf_counter()
         train_loss, train_acc = train_one_epoch_single_cuda(model, optimizer, train_dataloader, loss_fn, opt.device)
-        logger.log({"train_loss": train_loss, "train_acc": train_acc})
+        logger.log({"train_loss": train_loss, "train_acc": train_acc, "lr": optimizer.param_groups[0]['lr']})
         print(f"Epoch {epoch}, train_loss: {train_loss:.4f}, train_acc: {train_acc:.3f}.")
         scheduler.step()
         eval_loss, eval_acc = eval_single_cuda(model, eval_dataloader, loss_fn, opt.device)
