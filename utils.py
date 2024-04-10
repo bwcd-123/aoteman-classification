@@ -1,5 +1,18 @@
 import os
 import shutil
+import torch
+from torch.utils.data import Dataset
+from torch import nn
+import matplotlib.pyplot as plt
+from thop import profile, clever_format
+
+
+dict = {
+    'dijia':0,
+    'jieke':1,
+    'saiwen':2,
+    'tailuo':3
+}
 
 
 def remove_oldest_item(path:str, number:int=10):  
@@ -29,10 +42,80 @@ def remove_oldest_item(path:str, number:int=10):
             print(f'fail to delete "{oldest_item_path}": {e}')
 
 
-def count_parameters(model):
-    """计算模型参数量"""
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+def read_aoteman_data(root:str, train:bool=True, transform=None, **kwargs):
+    """
+    Read aoteman dataset. If train, return train dataset. Else, return eval dataset.
+    """
+    test_root = os.path.join(root, "predict_demo.jpg")
+    if not os.path.exists(test_root):
+        raise Exception(f"error root: '{root}'")
+    
+    if train:
+        root = os.path.join(root, "train")
+    else:
+        root = os.path.join(root, "eval")
+    
+    categories = os.listdir(root)
+    images = []
+    labels = []
 
+    for category in categories:
+        branch = os.path.join(root, category)
+        label = dict[category]
+        for image_name in os.listdir(branch):
+            image_path = os.path.join(branch, image_name)
+            images.append(image_path)
+            labels.append(label)
+        
+    return images, labels
+        
 
 def train_one_epoch(model, optimizer, data_loader, loss_fn, device):
     pass
+
+
+def show_L1Norm_vgg(model, save_path=None):
+    """
+    show L1_Norm in vgg11 model with graph.
+    """
+    index = 1
+    plt.figure(figsize=(14, 6))
+    for m in model.modules():
+        if isinstance(m, nn.Conv2d):
+            # 计算当前卷积层每一个卷积核的L1范数
+            weight_copy = m.weight.data.abs().clone()
+            weight_copy = weight_copy.cpu().numpy()
+            L1_norm = weight_copy.sum(axis=1).sum(axis=1).sum(axis=1)
+            sort = L1_norm.argsort()
+            L1_norm = L1_norm[sort]
+            plt.subplot(2, 4, index)
+            index += 1
+            min_10 = int(len(L1_norm) / 10)
+            min_20 = int(len(L1_norm) / 5)
+            min_10 = torch.ones_like(L1_norm) * L1_norm[int(min_10)]
+            min_20 = torch.ones_like(L1_norm) * L1_norm[int(min_20)]
+            plt.plot(L1_norm, label="L1_norm")
+            plt.plot(min_10, label="min 10%")
+            plt.plot(min_20, label="min 20%")
+            plt.xlabel("kernel index")
+            plt.ylabel("L1_norm")
+            plt.legend()
+
+    plt.tight_layout()
+    if save_path is not None:
+        plt.savefig(save_path)
+    plt.show()
+
+
+def get_params_and_FLOPs(model, input_size):
+    """
+    get params and FLOPs of model.
+    """
+    input_tensor = torch.rand(input_size)
+    FLOPs, params = profile(model, inputs=(input_tensor,))
+    FLOPs, params = clever_format([FLOPs, params], "%.3f")
+    return params, FLOPs
+
+
+if __name__ == "__main__":
+    read_aoteman_data(root="../datasets/aoteman")

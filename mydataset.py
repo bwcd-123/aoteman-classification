@@ -3,11 +3,11 @@ import torch
 from torch.utils.data import Dataset
 
 
-class MyDataset(Dataset):
-    def __init__(self, image_path:list, image_class:list, transform=None):
-        super().__init__()
-        self.image_path = image_path
-        self.image_class = image_class
+class AotemanDataset(Dataset):
+    def __init__(self, images_path:list, labels:list, transform=None):
+        super(AotemanDataset, self).__init__()
+        self.image_path = images_path
+        self.image_labels = labels
         self.transform = transform
 
 
@@ -23,7 +23,7 @@ class MyDataset(Dataset):
         if img.mode != "RGB":
             raise ValueError("image: {} isn't RGB mode.".format(self.image_path[index]))
         
-        label = self.image_class[index]
+        label = self.image_labels[index]
 
         if self.transform:
             img = self.transform(img)
