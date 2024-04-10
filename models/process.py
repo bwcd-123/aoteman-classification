@@ -20,5 +20,4 @@ class AddNoise(nn.Module):
 
     def forward(self, x):
         noise = torch.normal(0., self.noise_scale, x.shape)
-        print(111, x.shape, noise.shape)
         return x + noise

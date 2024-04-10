@@ -21,7 +21,7 @@ train_trainsform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize([0.4654, 0.4327, 0.4739], [0.2775, 0.2903, 0.3157]),
-    #  AddNoise(),
+    AddNoise(),
 ])
 eval_trainsform = transforms.Compose([
     transforms.Resize(256),
