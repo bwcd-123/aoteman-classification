@@ -3,9 +3,12 @@ import shutil
 import torch
 from torch.utils.data import Dataset
 from torch import nn
+from torch.utils.data import DataLoader
+from torchvision import transforms
 import matplotlib.pyplot as plt
 from thop import profile, clever_format
 
+from mydataset import ImageDataset
 
 dict = {
     'dijia':0,
@@ -117,5 +120,38 @@ def get_params_and_FLOPs(model, input_size):
     return params, FLOPs
 
 
+def get_mean_and_std(dataloader):
+    """
+    get mean and std of dataloader.
+    """
+    data, _ = next(iter(dataloader))
+
+    # get the everage of the dataloader
+    data_mean = torch.mean(data, dim=[0, 2, 3])
+
+    means = torch.ones_like(data, dtype=torch.float32)
+    means[:, 0, :, :] = data_mean[0]
+    means[:, 1, :, :] = data_mean[1]
+    means[:, 2, :, :] = data_mean[2]
+
+    # get the std of the dataset
+    data_std = torch.std(data, dim=[0, 2, 3])
+
+    return data_mean, data_std
+
+
 if __name__ == "__main__":
-    read_aoteman_data(root="../datasets/aoteman")
+    train_list, train_labels = read_aoteman_data(root='../datasets/aoteman', train=True)
+    test_list, test_labels = read_aoteman_data(root='../datasets/aoteman', train=False)
+    datas = train_list + test_list
+    labels = train_labels + test_labels
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+    ])
+
+    all_dataset = ImageDataset(datas, labels, transform=transform)
+    dataloader = DataLoader(all_dataset, batch_size=1000)
+
+    mean_data, std_data = get_mean_and_std(dataloader)
+    print(mean_data, std_data)

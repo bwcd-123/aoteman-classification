@@ -3,9 +3,9 @@ import torch
 from torch.utils.data import Dataset
 
 
-class AotemanDataset(Dataset):
+class ImageDataset(Dataset):
     def __init__(self, images_path:list, labels:list, transform=None):
-        super(AotemanDataset, self).__init__()
+        super(ImageDataset, self).__init__()
         self.image_path = images_path
         self.image_labels = labels
         self.transform = transform
