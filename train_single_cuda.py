@@ -45,6 +45,8 @@ def main(opt):
         torch.cuda.manual_seed_all(opt.seed)  # 为所有CUDA设备设置相同的种子
         
     model = get_model(opt.model)
+    if opt.model_path is not None:
+        model.load_state_dict(torch.load(opt.model_path))
     model = model.to(opt.device)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=opt.lr, momentum=0.9)
@@ -87,6 +89,7 @@ if __name__ == '__main__':
                      choices=['pvt_v2_b0', 'pvt_v2_b1', 'pvt_v2_b2', 'pvt_v2_b3', 'pvt_v2_b4', 'pvt_v2_b5', 'pvt_v2_b2_li'],
                      help="function name")
     arg.add_argument("--data_path", type=str, help="path of dataset")
+    arg.add_argument("--model_path", type=str, help="path of pretrain model.If no input, will create a new model")
     arg.add_argument("--batch_size", type=int, default=10, help="batch size")
     arg.add_argument("--epochs", type=int, default=100, help="epochs")
     arg.add_argument("--lr", type=float, default=0.001, help="learning rate")
